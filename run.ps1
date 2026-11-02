@@ -2,7 +2,7 @@ $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 
 $owner = 'T3ND41'
-$repository = 'SmartDriveOrganizer_RepoReady_v0.3.7'
+$repository = 'SmartDriveOrganizer'
 $apiUri = "https://api.github.com/repos/$owner/$repository/releases/latest"
 $managedRoot = $null
 $runtimeRoot = $null
@@ -178,6 +178,14 @@ try {
         $stagedExe = Join-Path $stagingFolder 'SmartDriveOrganizer.exe'
         if (-not (Test-Path -LiteralPath $stagedExe -PathType Leaf)) {
             throw 'The downloaded archive did not contain SmartDriveOrganizer.exe.'
+        }
+        $packageVersionFile = Join-Path $stagingFolder 'VERSION.txt'
+        if (-not (Test-Path -LiteralPath $packageVersionFile -PathType Leaf)) {
+            throw 'The downloaded archive did not contain VERSION.txt; its version cannot be verified.'
+        }
+        $packageVersion = (Get-Content -LiteralPath $packageVersionFile -Raw).Trim()
+        if ($packageVersion -ne $tag) {
+            throw "Package version $packageVersion does not match release $tag. The update was stopped."
         }
 
         New-Item -ItemType Directory -Path $targetFolder -Force | Out-Null
