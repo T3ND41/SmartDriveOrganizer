@@ -22,6 +22,7 @@ PUBLISHABLE_SOURCE_PATTERNS = (
     "run.py",
     "pyproject.toml",
     "README.md",
+    "FEATURE_AUDIT.md",
     "CHANGELOG.md",
     "LICENSE.txt",
     "PUBLISHING_TO_GITHUB.md",
