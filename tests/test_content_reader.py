@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import tempfile
 import unittest
+import zipfile
+from unittest.mock import patch
 from pathlib import Path
 
-from smart_drive_organizer.content_reader import MAX_TEXT_CHARS, read_document_text
+from smart_drive_organizer.content_reader import MAX_TEXT_CHARS, read_document_text, _validate_office_archive
 
 
 class ContentReaderTests(unittest.TestCase):
@@ -16,6 +18,34 @@ class ContentReaderTests(unittest.TestCase):
             result = read_document_text(path)
             self.assertGreater(len(result), 12000)
             self.assertLessEqual(len(result), MAX_TEXT_CHARS)
+
+
+    def test_office_archive_total_uncompressed_limit_is_enforced(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "oversized.docx"
+            with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+                archive.writestr("word/document.xml", "<root>content</root>")
+            with patch("smart_drive_organizer.content_reader.MAX_ARCHIVE_TOTAL_BYTES", 4):
+                with self.assertRaisesRegex(ValueError, "total extraction limit"):
+                    _validate_office_archive(path)
+
+    def test_office_archive_member_count_limit_is_enforced(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "many.docx"
+            with zipfile.ZipFile(path, "w") as archive:
+                archive.writestr("word/document.xml", "<root/>")
+                archive.writestr("word/header1.xml", "<root/>")
+            with patch("smart_drive_organizer.content_reader.MAX_ARCHIVE_ENTRIES", 1):
+                with self.assertRaisesRegex(ValueError, "too many entries"):
+                    _validate_office_archive(path)
+
+    def test_docx_rejects_unsafe_archive_member_paths(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "unsafe.docx"
+            with zipfile.ZipFile(path, "w") as archive:
+                archive.writestr("../outside.xml", "<root/>")
+            with self.assertRaisesRegex(ValueError, "unsafe member path"):
+                _validate_office_archive(path)
 
     def test_eml_extracts_subject_sender_and_text_body(self):
         with tempfile.TemporaryDirectory() as temp:
