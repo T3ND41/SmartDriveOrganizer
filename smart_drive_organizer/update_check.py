@@ -5,8 +5,8 @@ import re
 from urllib.request import Request, urlopen
 from urllib.parse import urlsplit
 
-RELEASE_API_URL = "https://api.github.com/repos/T3ND41/SmartDriveOrganizer_RepoReady_v0.3.7/releases/latest"
-RELEASE_PAGE_PREFIX = "https://github.com/T3ND41/SmartDriveOrganizer_RepoReady_v0.3.7/releases/tag/"
+RELEASE_API_URL = "https://api.github.com/repos/T3ND41/SmartDriveOrganizer/releases/latest"
+RELEASE_PAGE_PREFIX = "https://github.com/T3ND41/SmartDriveOrganizer/releases/tag/"
 
 
 def _version_parts(value: str) -> tuple[int, int, int]:
