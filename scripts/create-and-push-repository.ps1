@@ -101,7 +101,7 @@ try {
     $allowedPaths = [System.Collections.Generic.List[string]]::new()
     $fixedPaths = @(
         '.gitignore', 'README.md', 'CHANGELOG.md', 'LICENSE.txt', 'PUBLISHING_TO_GITHUB.md',
-        'REPOSITORY_SETUP.md', 'INSTALLER_ENDPOINTS.txt', 'START_HERE.txt', 'SECURITY.md',
+        'REPOSITORY_SETUP.md', 'INSTALLER_ENDPOINTS.txt', 'START_HERE.txt', 'SECURITY.md', 'FEATURE_AUDIT.md',
         'TEST_RESULTS.txt', 'VERSION.txt', 'PUSH_TO_GITHUB.bat', 'Start_SmartDriveOrganizer.bat',
         'run.py', 'pyproject.toml', 'requirements-content.txt', 'install.ps1',
         'config/keyword_rules.json', 'config/published_topic_rules.json', 'config/topic_rules.example.json'
