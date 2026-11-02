@@ -205,7 +205,10 @@ def validate_config(config: AutomationConfig, allow_missing_roots: bool = False)
         raise ValueError("Choose a named output folder outside protected Windows/system directories.")
     roots: list[Path] = []
     for value in config.monitor_folders:
-        root = Path(value).expanduser().resolve()
+        root_input = Path(value).expanduser()
+        if root_input.exists() and _is_reparse_or_link(root_input):
+            raise ValueError(f"This is a link or reparse point and cannot be monitored: {root_input}")
+        root = root_input.resolve()
         if not root.exists():
             if not allow_missing_roots:
                 raise ValueError(f"The monitored folder does not exist or is unavailable: {root}")
