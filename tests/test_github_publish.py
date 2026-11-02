@@ -250,6 +250,24 @@ class GitHubPublishTests(unittest.TestCase):
             self.assertFalse((repo / "config" / "keyword_rules.json").exists())
             self.assertTrue(any(call and call[0] == "push" for call in calls))
 
+
+    def test_source_preview_rejects_symlinked_repository_destination(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            repo = root / "repo"
+            repo.mkdir()
+            outside = root / "outside"
+            outside.mkdir()
+            source = root / "source"
+            (source / "smart_drive_organizer").mkdir(parents=True)
+            (source / "smart_drive_organizer" / "gui.py").write_text("# source", encoding="utf-8")
+            try:
+                (repo / "smart_drive_organizer").symlink_to(outside, target_is_directory=True)
+            except (OSError, NotImplementedError):
+                self.skipTest("Directory symlink creation is not permitted on this platform.")
+            with self.assertRaisesRegex(gh.GitHubPublishError, "symbolic link or reparse point"):
+                gh._source_change_plan(repo, source)
+
     def test_source_preview_refuses_to_publish_when_repository_has_unrelated_changes(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)

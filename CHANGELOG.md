@@ -1,3 +1,14 @@
+# Changelog
+
+## 0.8.1 — Security hardening and repository rename
+
+- Updated all application endpoints and user-facing bootstrap references to T3ND41/SmartDriveOrganizer.
+- Portable launcher verifies the downloaded package version matches the release tag after its SHA-256 check and before updating an executable.
+- Added Office ZIP archive resource limits, XML member size limits, suspicious compression-ratio checks and MIME part count limits.
+- Disabled PowerPoint macro automation while reading legacy presentations.
+- Raised the minimum supported pypdf version to 6.21.4 to include upstream PDF parser denial-of-service fixes.
+- Added regression tests for the new resource limits and renamed distribution endpoints.
+
 ## 0.8.0 — Exhaustive selected-root scans and scan integrity
 
 - Scan every selected drive or folder recursively, including user AppData and documents inside software project folders; network locations remain explicitly opt-in.

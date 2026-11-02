@@ -80,6 +80,47 @@ class OperationTests(unittest.TestCase):
             self.assertEqual(source.read_bytes(), b"interrupted move contents")
             self.assertFalse(target.exists())
 
+
+    def test_apply_refuses_a_source_path_outside_selected_roots(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root, output, outside = Path(temp) / "source", Path(temp) / "output", Path(temp) / "outside.pdf"
+            root.mkdir()
+            outside.write_bytes(b"outside")
+            plan = self._make_plan(root, output)
+            plan.files[0].source = outside
+            result = run_plan(plan, "copy")
+            action = result["journal"]["actions"][0]
+            self.assertEqual(action["status"], "failed")
+            self.assertTrue(outside.is_file())
+            self.assertFalse(Path(action["destination"]).exists())
+
+    def test_apply_refuses_a_file_changed_since_preview(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root, output = Path(temp) / "source", Path(temp) / "output"
+            root.mkdir()
+            plan = self._make_plan(root, output)
+            plan.files[0].source.write_bytes(b"changed with a different size")
+            result = run_plan(plan, "copy")
+            self.assertEqual(result["journal"]["actions"][0]["status"], "failed")
+            self.assertTrue(plan.files[0].source.is_file())
+            self.assertFalse(Path(result["journal"]["actions"][0]["destination"]).exists())
+
+    def test_apply_refuses_a_symlink_source_when_platform_supports_symlinks(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root, output, outside = Path(temp) / "source", Path(temp) / "output", Path(temp) / "outside.pdf"
+            root.mkdir()
+            outside.write_bytes(b"outside")
+            plan = self._make_plan(root, output)
+            source = plan.files[0].source
+            source.unlink()
+            try:
+                source.symlink_to(outside)
+            except (OSError, NotImplementedError):
+                self.skipTest("Symlink creation is not permitted on this platform.")
+            result = run_plan(plan, "copy")
+            self.assertEqual(result["journal"]["actions"][0]["status"], "failed")
+            self.assertEqual(outside.read_bytes(), b"outside")
+
     def test_copy_run_is_not_eligible_for_undo(self):
         with tempfile.TemporaryDirectory() as temp:
             root, output = Path(temp) / "source", Path(temp) / "output"

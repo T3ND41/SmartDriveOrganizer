@@ -4,6 +4,7 @@ import json
 import os
 import re
 import shutil
+import stat
 import subprocess
 import tempfile
 from pathlib import Path, PureWindowsPath
@@ -21,6 +22,7 @@ PUBLISHABLE_SOURCE_PATTERNS = (
     "run.py",
     "pyproject.toml",
     "README.md",
+    "FEATURE_AUDIT.md",
     "CHANGELOG.md",
     "LICENSE.txt",
     "PUBLISHING_TO_GITHUB.md",
@@ -462,6 +464,32 @@ def _check_source_for_secrets(path: Path, content: bytes) -> None:
             )
 
 
+
+def _validate_repository_target(repo: Path, relative: str) -> Path:
+    """Ensure a publish destination cannot escape the checkout through a link."""
+    root = repo.resolve()
+    relative_path = Path(relative)
+    if relative_path.is_absolute() or ".." in relative_path.parts:
+        raise GitHubPublishError(f"Unsafe repository-relative destination: {relative}")
+    current = root
+    reparse_flag = getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
+    for part in relative_path.parts:
+        current = current / part
+        try:
+            info = current.lstat()
+        except FileNotFoundError:
+            continue
+        except OSError as error:
+            raise GitHubPublishError(f"Could not validate repository destination {current}: {error}") from error
+        if stat.S_ISLNK(info.st_mode) or getattr(info, "st_file_attributes", 0) & reparse_flag:
+            raise GitHubPublishError(f"Refusing to write through a symbolic link or reparse point in the repository: {current}")
+        try:
+            current.resolve().relative_to(root)
+        except (OSError, ValueError) as error:
+            raise GitHubPublishError(f"Repository destination escapes the checkout: {current}") from error
+    return root / relative_path
+
+
 def _source_change_plan(repo: Path, source_root: Optional[str | Path] = None) -> dict[str, list[str]]:
     source_files = collect_publishable_source_files(source_root)
     added: list[str] = []
@@ -470,7 +498,7 @@ def _source_change_plan(repo: Path, source_root: Optional[str | Path] = None) ->
     for relative, source in source_files.items():
         content = source.read_bytes()
         _check_source_for_secrets(relative, content)
-        target = repo / relative
+        target = _validate_repository_target(repo, relative)
         if not target.exists():
             added.append(relative)
         elif not target.is_file() or target.read_bytes() != content:
@@ -513,8 +541,10 @@ def publish_application_update_to_github(
         source = source_files[relative]
         content = source.read_bytes()
         _check_source_for_secrets(relative, content)
-        target = repo / relative
+        target = _validate_repository_target(repo, relative)
         target.parent.mkdir(parents=True, exist_ok=True)
+        # Re-check after creating missing parents to catch unexpected links.
+        target = _validate_repository_target(repo, relative)
         target.write_bytes(content)
 
     add = _git(["add", "--", *changed_paths], cwd=repo, timeout=60)

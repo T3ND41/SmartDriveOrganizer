@@ -1,5 +1,5 @@
 const INSTALLER_URL =
-  "https://raw.githubusercontent.com/T3ND41/SmartDriveOrganizer_RepoReady_v0.3.7/main/install.ps1";
+  "https://raw.githubusercontent.com/T3ND41/SmartDriveOrganizer/main/install.ps1";
 
 export default {
   async fetch(request) {

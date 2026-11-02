@@ -34,7 +34,7 @@ Use **Preview / publish app source update…** when you have changed the program
 
 Before anything is uploaded, the app compares its source tree with the saved repository checkout and shows you the exact new or changed files. It then asks for confirmation. The approved source allowlist is:
 
-- `run.py`, `pyproject.toml`, README, changelog, license, launcher and publishing/setup documentation.
+- `run.py`, `pyproject.toml`, README, feature audit, changelog, license, launcher and publishing/setup documentation.
 - Python modules under `smart_drive_organizer/`.
 - Python tests under `tests/`.
 - `config/topic_rules.example.json`.
@@ -70,24 +70,24 @@ The app may report that a commit was created locally but the push failed. Review
 The standalone Windows application uses Git installed and authenticated on that Windows computer. A GitHub connection inside ChatGPT is separate and does not automatically authenticate another application running on your laptop.
 
 
-## Public repository and one-line installer distribution (0.3.6)
+## Public repository and one-line installer distribution (v0.8.1)
 
-Repository target for this build: `T3ND41/SmartDriveOrganizer_RepoReady_v0.3.7_RepoReady_v0.3.8` (public, because the Raw bootstrap and release assets must be anonymously readable). The source contains no local settings, databases, activity logs, personal documents or drive-specific paths. Review `.gitignore` before adding any files.
+Repository target for this build: `T3ND41/SmartDriveOrganizer` (public, because the Raw bootstrap and release assets must be anonymously readable). The source contains no local settings, databases, activity logs, personal documents or drive-specific paths. Review `.gitignore` before adding any files.
 
-### First release
+### Publish a new Windows release
 
 1. Push the repository contents to the `main` branch.
 2. Confirm GitHub Actions has permission to create releases (`contents: write` in `.github/workflows/release.yml`).
-3. Create and push tag `v0.3.6`.
+3. After the v0.8.1 source changes are merged to `main`, publish tag or release branch `v0.8.1`.
 4. The Windows workflow tests the program, builds `SmartDriveOrganizer.exe`, creates `SmartDriveOrganizer-windows-x64.zip`, writes `SHA256SUMS.txt`, and publishes both assets as a GitHub Release.
 5. Check that the latest release contains both expected assets before publishing the installer command.
 
 ### Run without manually downloading a ZIP
 
-After the public repository and first release exist, this command downloads and installs the latest release automatically:
+With the public repository and a published Windows release, this command downloads and installs the latest release automatically:
 
 ```powershell
-irm https://raw.githubusercontent.com/T3ND41/SmartDriveOrganizer_RepoReady_v0.3.7_RepoReady_v0.3.8/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/T3ND41/SmartDriveOrganizer/main/install.ps1 | iex
 ```
 
 The installer runs per-user, checks the downloaded ZIP SHA-256 hash against the release manifest, installs the EXE into `%LOCALAPPDATA%\Programs\SmartDriveOrganizer`, creates a Start Menu shortcut and starts the app. It aborts if the app is currently running or if the checksum does not match.

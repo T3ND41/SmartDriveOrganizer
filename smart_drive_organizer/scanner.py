@@ -107,7 +107,10 @@ def scan_directory(
     drive_index: int = 1,
     drive_total: int = 1,
 ) -> ScanPlan:
-    source = source_root.expanduser().resolve()
+    source_candidate = source_root.expanduser()
+    if _is_reparse_or_link(source_candidate):
+        raise ValueError("The selected source is a link or reparse point. Select the real folder instead.")
+    source = source_candidate.resolve()
     output = output_root.expanduser().resolve()
     if output.exists() and not output.is_dir():
         raise ValueError("The output destination already exists as a file. Choose a folder instead.")
@@ -350,7 +353,10 @@ def scan_directories(
     requested: List[Path] = []
     seen = set()
     for candidate in source_roots:
-        resolved = candidate.expanduser().resolve()
+        candidate_path = candidate.expanduser()
+        if _is_reparse_or_link(candidate_path):
+            raise ValueError(f"The selected source is a link or reparse point: {candidate_path}")
+        resolved = candidate_path.resolve()
         key = os.path.normcase(str(resolved))
         if key not in seen:
             seen.add(key)

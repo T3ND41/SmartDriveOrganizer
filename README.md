@@ -1,10 +1,21 @@
-# Smart Drive Organizer — v0.8.0
+# Smart Drive Organizer — v0.8.1
 
 **Branded intelligent file search, safe discovery and reviewable organization**
 
 A local-first Windows file organizer with a redesigned desktop workspace, custom keyword routing, multi-drive scanning, persistent rules and optional background monitoring.
 
+See [FEATURE_AUDIT.md](FEATURE_AUDIT.md) for the implementation checklist, verification boundaries and capabilities that remain roadmap items.
+
 **Brand system:** red `#D71920`, black `#101010`, and white `#FFFFFF`. The supplied split red/black face-and-skull mark, matching Windows executable icon and supplied light/dark feature icons are bundled with the application. The saved themes are Light, Dark and Redline.
+
+## v0.8.1 — Security hardening and renamed repository support
+
+- Updated installer, portable launcher, in-app update checker, Cloudflare bootstrap and documentation to use the renamed repository.
+- The portable launcher now verifies that the package version matches the GitHub release tag after SHA-256 verification and before replacing an installed executable.
+- Hardened Office document parsing with archive entry, per-entry, total uncompressed-size, XML-size and compression-ratio limits; bounded MIME part traversal.
+- Disabled PowerPoint macro automation when indexing legacy presentations.
+- Raised the minimum PDF reader version to pypdf 6.21.4 to include fixes for reported PDF parser denial-of-service issues.
+- Added regression tests for archive limits, unsafe archive member names, renamed repository endpoints and portable package-version checks.
 
 ## v0.8.0 — More exhaustive scans, explicit coverage reporting and version integrity
 
@@ -36,7 +47,7 @@ Choose **Check for updates** in the desktop navigation to compare the running ve
 The no-install PowerShell launcher is recommended. The conventional per-user installer is still available separately:
 
 ```powershell
-irm https://raw.githubusercontent.com/T3ND41/SmartDriveOrganizer_RepoReady_v0.3.7/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/T3ND41/SmartDriveOrganizer/main/install.ps1 | iex
 ```
 
 The installer fetches the latest GitHub Release, verifies its SHA-256 manifest, installs the per-user Windows application, creates a Start Menu shortcut and launches it.
@@ -63,9 +74,9 @@ The installer fetches the latest GitHub Release, verifies its SHA-256 manifest, 
 
 ### Safe search boundaries
 
-To protect Windows, installed applications and development environments, the scanner deliberately skips Windows and recovery directories, Boot/EFI areas, Program Files, ProgramData, AppData, recycle-bin/system-volume folders, protected operating-system files, project roots and common package/dependency/cache folders. It also avoids following symbolic links, junctions and other reparse points. Inaccessible folders are reported as warnings rather than forced open. Network locations are not selected automatically.
+To protect Windows, installed applications and development environments, the scanner deliberately skips Windows and recovery directories, Boot/EFI areas, Program Files, ProgramData, recycle-bin/system-volume folders, protected operating-system files, project dependency/cache folders and common package/dependency directories. It does not follow symbolic links, junctions and other reparse points. Accessible user files under AppData are eligible for scanning; active application caches and locked files may still be inaccessible. Inaccessible folders are reported as warnings rather than forced open. Network locations are visible but are not selected automatically.
 
-This is an intentionally safe deep search of accessible personal/work files on the selected volumes, **not a byte-for-byte search of every protected operating-system location**. Some user data stored inside excluded locations such as AppData will therefore not appear. No scan can promise access to every file on a machine, because permissions, encryption, offline drives and damaged media can prevent access.
+This is an intentionally safe deep search of accessible personal/work files on the selected volumes, **not a byte-for-byte search of every protected operating-system location**. No scan can promise access to every file on a machine, because permissions, encryption, offline drives, damaged media and deliberately excluded system/dependency locations can prevent access.
 
 ## Local full-text search, learning memory and duplicate intelligence (v0.6.0)
 
@@ -78,7 +89,7 @@ This is an intentionally safe deep search of accessible personal/work files on t
 ### Full-text formats and limits
 - Extracts text from PDF text layers, DOCX, XLSX/XLSM, PPTX, plain text, CSV/TSV, HTML/XML, RTF, source-code text, EML email and Outlook MSG email.
 - Outlook MSG extraction uses the optional `extract-msg` parser, included in the Windows build.
-- Document extraction is bounded to protect memory and scan time. Very large or encrypted files, damaged documents and formats without a supported parser may be indexed by name/metadata only.
+- Document extraction is bounded to protect memory and scan time. Office ZIP containers are checked before parsing and limited to 10,000 entries, 64 MB per member, 256 MB total uncompressed data and a 1,000:1 compression ratio; selected XML entries are capped at 16 MB. Email traversal is capped at 1,000 MIME parts. Very large or encrypted files, damaged documents and formats without a supported parser may be indexed by name/metadata only. The PDF reader requires pypdf 6.21.4 or later.
 - Legacy binary Office files (`.doc`, `.xls`, `.ppt`) can be read through the installed Microsoft Office desktop applications on Windows using read-only automation with macros and external workbook link updates disabled. This requires Microsoft Office to already be installed; without it, these files remain searchable by filename/metadata. Image-only/scanned PDFs require OCR, which is not part of this release.
 
 ### Adaptive local memory
@@ -118,7 +129,7 @@ After selecting broad file families, click **Choose file formats…**. For each 
 Open PowerShell and paste this single line:
 
 ```powershell
-irm https://raw.githubusercontent.com/T3ND41/SmartDriveOrganizer_RepoReady_v0.3.7/main/run.ps1 | iex
+irm https://raw.githubusercontent.com/T3ND41/SmartDriveOrganizer/main/run.ps1 | iex
 ```
 
 The launcher first checks whether Smart Drive Organizer is already present in `%LOCALAPPDATA%\\Programs\\SmartDriveOrganizer` or its portable runtime cache. It compares the local version with the latest stable GitHub Release. If the current version is already present, it launches that copy without downloading another. If an older copy is found, it asks before updating that same folder in place; declining leaves the current copy untouched. If no copy exists, it downloads and verifies the Windows ZIP and SHA-256 manifest, then extracts to `%LOCALAPPDATA%\\SmartDriveOrganizer\\PortableRuntime\\Current`. It does not create a Start Menu shortcut, startup entry or registry installation, and it does not require administrator rights or Python. It does not start a second application window when Smart Drive Organizer is already running. Your application settings remain in the separate per-user data folder.
@@ -140,7 +151,20 @@ Run tests with `python -m unittest discover -s tests -v`.
 
 ## CI and Windows releases
 
-Pushes to `main` run tests on Windows and Linux. Pushing a version tag such as `v0.7.0` runs the Windows release workflow, which tests the project, builds the executable, packages it, calculates SHA-256 and publishes a GitHub Release.
+Pushes to `main` run tests on Windows and Linux. Pushing a version tag or release branch such as `v0.8.1` runs the Windows release workflow, which tests the project, builds the executable, packages it, calculates SHA-256 and publishes a GitHub Release.
+
+## Features deliberately not included in v0.8.1
+
+The following ideas appeared in research notes or roadmap discussions but are **not implemented as working features** in this release:
+
+- Local LLM/embedding-based semantic search or automatic AI classification. Current grouping is deterministic filename/keyword rules plus supported document text extraction.
+- OCR for scanned/image-only PDFs and image files.
+- Visual understanding of image/video files, audio transcription, video keyframe analysis or automatic media descriptions. Media is organized using filenames, extensions, metadata and user-defined rules.
+- Automatic full-text discovery of unknown topics. Discovery currently finds repeated filename patterns across different files; full-text content is used to match saved rules and power the search index.
+- Persistent recovery of an in-progress pause after closing and reopening the application. Pause/Resume is for the active app session; the operation journal preserves completed file actions for recovery and undo.
+- A real-time filesystem event watcher. Background monitoring polls selected folders on a configurable interval and waits for files to become stable before processing them.
+
+These are roadmap candidates, not hidden or partially working switches. Adding them would require separate dependencies, resource controls, privacy decisions and acceptance tests.
 
 ## Safety
 
@@ -157,4 +181,4 @@ Pushes to `main` run tests on Windows and Linux. Pushing a version tag such as `
 
 ## Repository
 
-https://github.com/T3ND41/SmartDriveOrganizer_RepoReady_v0.3.7
+https://github.com/T3ND41/SmartDriveOrganizer

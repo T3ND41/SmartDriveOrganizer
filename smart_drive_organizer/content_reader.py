@@ -11,6 +11,49 @@ import sys
 MAX_READ_BYTES = 64 * 1024 * 1024
 MAX_TEXT_CHARS = 250_000
 
+# Office Open XML files are ZIP containers. Bound both the compressed input
+# and their declared uncompressed contents before passing them to parsers.
+MAX_ARCHIVE_ENTRIES = 10_000
+MAX_ARCHIVE_MEMBER_BYTES = 64 * 1024 * 1024
+MAX_ARCHIVE_TOTAL_BYTES = 256 * 1024 * 1024
+MAX_ARCHIVE_XML_MEMBER_BYTES = 16 * 1024 * 1024
+MAX_ARCHIVE_COMPRESSION_RATIO = 1_000
+MAX_EMAIL_PARTS = 1_000
+
+
+def _validate_office_archive(path: Path) -> None:
+    """Reject malformed or resource-exhausting Office ZIP containers early."""
+    total_uncompressed = 0
+    with zipfile.ZipFile(path) as archive:
+        infos = archive.infolist()
+        if len(infos) > MAX_ARCHIVE_ENTRIES:
+            raise ValueError("Office archive contains too many entries.")
+        for info in infos:
+            if info.flag_bits & 0x1:
+                raise ValueError("Encrypted Office archive entries are not supported.")
+            if info.file_size < 0 or info.compress_size < 0:
+                raise ValueError("Office archive contains invalid size metadata.")
+            if info.file_size > MAX_ARCHIVE_MEMBER_BYTES:
+                raise ValueError("Office archive entry exceeds the extraction limit.")
+            total_uncompressed += info.file_size
+            if total_uncompressed > MAX_ARCHIVE_TOTAL_BYTES:
+                raise ValueError("Office archive exceeds the total extraction limit.")
+            if info.file_size >= 1024 * 1024:
+                if info.compress_size == 0 or info.file_size / info.compress_size > MAX_ARCHIVE_COMPRESSION_RATIO:
+                    raise ValueError("Office archive has a suspicious compression ratio.")
+            member = Path(info.filename.replace("\\", "/"))
+            if member.is_absolute() or ".." in member.parts:
+                raise ValueError("Office archive contains an unsafe member path.")
+
+
+def _read_zip_member_limited(archive: zipfile.ZipFile, name: str) -> bytes:
+    """Read a single XML member with a strict uncompressed-size cap."""
+    with archive.open(name, "r") as handle:
+        value = handle.read(MAX_ARCHIVE_XML_MEMBER_BYTES + 1)
+    if len(value) > MAX_ARCHIVE_XML_MEMBER_BYTES:
+        raise ValueError("Office XML entry exceeds the parsing limit.")
+    return value
+
 
 def _read_bytes(path: Path) -> bytes:
     with path.open("rb") as handle:
@@ -30,12 +73,13 @@ def _plain_text(path: Path) -> str:
 def _docx_text(path: Path) -> str:
     from xml.etree import ElementTree as ET
     pieces = []
+    _validate_office_archive(path)
     with zipfile.ZipFile(path) as archive:
         names = [name for name in archive.namelist()
                  if name.startswith("word/") and name.endswith(".xml")
                  and any(part in name for part in ("document.xml", "header", "footer", "footnotes", "endnotes", "comments"))]
         for name in names:
-            root = ET.fromstring(archive.read(name))
+            root = ET.fromstring(_read_zip_member_limited(archive, name))
             pieces.extend(node.text or "" for node in root.iter() if node.tag.endswith("}t"))
             if sum(map(len, pieces)) >= MAX_TEXT_CHARS:
                 break
@@ -63,6 +107,7 @@ def _pdf_text(path: Path) -> str:
 
 
 def _xlsx_text(path: Path) -> str:
+    _validate_office_archive(path)
     from openpyxl import load_workbook
     workbook = load_workbook(path, read_only=True, data_only=True, keep_links=False)
     pieces = []
@@ -85,6 +130,7 @@ def _xlsx_text(path: Path) -> str:
 
 
 def _pptx_text(path: Path) -> str:
+    _validate_office_archive(path)
     from pptx import Presentation
     presentation = Presentation(str(path))
     pieces = []
@@ -104,7 +150,9 @@ def _pptx_text(path: Path) -> str:
 def _eml_text(path: Path) -> str:
     message = BytesParser(policy=policy.default).parsebytes(_read_bytes(path))
     pieces = []
-    for part in message.walk():
+    for part_number, part in enumerate(message.walk(), start=1):
+        if part_number > MAX_EMAIL_PARTS:
+            break
         if part.is_multipart() or part.get_content_disposition() == "attachment":
             continue
         if part.get_content_type() not in {"text/plain", "text/html"}:
@@ -139,8 +187,9 @@ def _msg_text(path: Path) -> str:
 def _legacy_office_text(path: Path, kind: str) -> str:
     """Read binary .doc/.xls/.ppt files through installed desktop Office, when available.
 
-    Uses a separate hidden Office process, opens files read-only, disables macro
-    automation and external workbook link updates, and always closes the document.
+    Uses a separate Office process, opens files read-only, disables macro
+    automation for every supported Office host and external workbook link updates,
+    and always closes the document.
     No Office installation is downloaded or changed.
     """
     if sys.platform != "win32":
@@ -204,7 +253,10 @@ def _legacy_office_text(path: Path, kind: str) -> str:
 
         if kind == "powerpoint":
             application = win32com.client.DispatchEx("PowerPoint.Application")
-            application.DisplayAlerts = 1
+            application.Visible = False
+            application.DisplayAlerts = 0
+            # msoAutomationSecurityForceDisable: set before opening user content.
+            application.AutomationSecurity = 3
             document = application.Presentations.Open(
                 str(path), ReadOnly=True, Untitled=False, WithWindow=False,
             )

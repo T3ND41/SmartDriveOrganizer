@@ -1,13 +1,13 @@
 # Smart Drive Organizer per-user installer.
 # Usage after the repository is public:
-#   irm https://raw.githubusercontent.com/T3ND41/SmartDriveOrganizer_RepoReady_v0.3.7/main/install.ps1 | iex
+#   irm https://raw.githubusercontent.com/T3ND41/SmartDriveOrganizer/main/install.ps1 | iex
 # Custom-domain alias (after the Cloudflare Worker and DNS are configured):
 #   irm https://smart.drive.win | iex
 
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 
-$Repository = 'T3ND41/SmartDriveOrganizer_RepoReady_v0.3.7'
+$Repository = 'T3ND41/SmartDriveOrganizer'
 $ReleaseApi = "https://api.github.com/repos/$Repository/releases/latest"
 $ExpectedZipName = 'SmartDriveOrganizer-windows-x64.zip'
 $ExpectedChecksumName = 'SHA256SUMS.txt'
