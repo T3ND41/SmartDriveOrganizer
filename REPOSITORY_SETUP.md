@@ -10,7 +10,7 @@ This project includes a guided Windows script that publishes to the existing pub
 4. If GitHub CLI is missing, the script offers to install it using Windows Package Manager. You can also install it from <https://cli.github.com/>.
 5. The script checks GitHub CLI authentication. If needed, it opens the browser sign-in flow. Sign in as `T3ND41`.
 6. Review the list of staged project files and confirm the commit.
-7. The script creates `T3ND41/SmartDriveOrganizer_RepoReady_v0.3.7_RepoReady_v0.3.8` as a **public** repository if it does not exist, pushes `main`, then pushes tag `v0.3.8`.
+7. The script creates `T3ND41/SmartDriveOrganizer` as a **public** repository if it does not exist, pushes `main`, then pushes tag `v0.3.8`.
 
 The GitHub CLI's `repo create --source --remote --push` command is the supported mechanism for creating a repository from an existing local project. See <https://cli.github.com/manual/gh_repo_create>.
 
@@ -35,7 +35,7 @@ Pushing tag `v0.3.8` triggers `.github/workflows/release.yml`. GitHub Actions ru
 After the release is published, install from PowerShell with:
 
 ```powershell
-irm https://raw.githubusercontent.com/T3ND41/SmartDriveOrganizer_RepoReady_v0.3.7_RepoReady_v0.3.8/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/T3ND41/SmartDriveOrganizer/main/install.ps1 | iex
 ```
 
 This command runs the published installer script, which downloads the latest release ZIP, verifies its SHA-256 checksum, installs the application per-user and creates a Start Menu shortcut. It does not eliminate downloading; it automates it without asking the user to manually download or extract the package.
