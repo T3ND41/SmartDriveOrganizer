@@ -1,7 +1,7 @@
-SMART DRIVE ORGANIZER 0.3.8 — START HERE
+SMART DRIVE ORGANIZER 0.8.1 — START HERE
 
 WHAT IS NEW
-Version 0.3.7 includes automatic background monitoring, user-defined partial keywords and exact destinations, plus paste-a-link GitHub publishing for shared rules and reviewed application source updates. Configure Downloads (and any other folders you want watched), set your topic rules and destinations, choose Copy or Move, and save. The monitor runs separately from the desktop window.
+Version 0.8.1 includes multi-drive recursive search, exact extension selection, local full-text indexing, duplicate/version review, adaptive learning, background monitoring, user-defined keyword routing, safer PowerShell distribution and a renamed-repository security update. Read FEATURE_AUDIT.md for the complete implementation checklist and known roadmap items. Configure Downloads (and any other folders you want watched), set your topic rules and destinations, choose Copy or Move, and save. The monitor runs separately from the desktop window.
 
 RUN THE DESKTOP APP
 1. Extract the complete ZIP folder to a permanent location, for example C:\Tools\SmartDriveOrganizer.
@@ -59,7 +59,7 @@ SAFETY
 - Files in Windows/system/dependency directories, links/junctions, common temporary download formats, and detected software project subfolders are skipped.
 - Files in categories you did not select are left in place.
 - Unknown extensions are placed in Others when Others is selected.
-- Automatic organization does not delete duplicate files. Identical files remain separate and are handled with unique names.
+- Background automatic organization never deletes duplicates. The separate duplicate-review screen may send older byte-identical copies to the OS Recycle Bin only after explicit confirmation and fresh SHA-256 checks; near-matches and possible versions remain untouched.
 - The application does not request administrator access. Access-denied folders are skipped by the operating system and cannot be organized without permission.
 
 PERFORMANCE
@@ -69,13 +69,13 @@ RUN TESTS
 From PowerShell in the extracted folder:
 python -m unittest discover -s tests -v
 
-BUILD A WINDOWS EXECUTABLE (OPTIONAL; NOT BUILT IN THIS RELEASE)
+BUILD A WINDOWS EXECUTABLE (OPTIONAL; THE RELEASE WORKFLOW ALSO BUILDS IT)
 python -m pip install pyinstaller
 pyinstaller --noconfirm --windowed --name SmartDriveOrganizer run.py
-The executable is created under dist. Validate the EXE and its startup behaviour on the target Windows laptop before relying on it.
+The executable is created under dist. The published GitHub Release also contains a prebuilt Windows EXE. Validate the EXE and startup behaviour on the target Windows laptop before relying on it.
 
 
-GITHUB CONNECTION AND PUBLISHING (0.3.7)
+GITHUB CONNECTION AND PUBLISHING (0.8.1)
 1. Install Git for Windows or GitHub Desktop and sign in to GitHub once using Git Credential Manager / GitHub Desktop.
 2. In the app, open Publish rules to GitHub…
 3. Paste the main repository URL (for example https://github.com/YOUR-USERNAME/YOUR-REPOSITORY).
@@ -88,7 +88,7 @@ Git authentication is handled by Git for Windows / GitHub Desktop / Git Credenti
 See PUBLISHING_TO_GITHUB.md for the full guide.
 
 
-ONE-LINE INSTALLER DISTRIBUTION (0.3.7)
+ONE-LINE INSTALLER DISTRIBUTION (0.8.1)
 - Once the public GitHub repository and its first tagged Windows release exist, PowerShell can install the app without manually downloading the ZIP.
 - Direct command: irm https://raw.githubusercontent.com/T3ND41/SmartDriveOrganizer/main/install.ps1 | iex
 - Preferred short alias after domain configuration: irm https://smart.drive.win | iex
@@ -98,7 +98,7 @@ ONE-LINE INSTALLER DISTRIBUTION (0.3.7)
 - irm | iex executes remote code. Inspect install.ps1 before running and only trust the repository endpoint.
 
 
-FILE FORMAT SELECTION (0.3.8)
+FILE FORMAT SELECTION (0.8.1)
 - Select one or more broad file families on the main screen or Automation Settings.
 - Click Choose file formats… to choose All supported formats or only selected extensions.
 - Common formats appear first; additional and specialist formats are listed below.
