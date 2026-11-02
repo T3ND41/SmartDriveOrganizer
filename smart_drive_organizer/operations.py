@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 import shutil
+import stat
 import tempfile
 import uuid
 from datetime import datetime, timezone
@@ -134,6 +135,40 @@ def _move_file(source: Path, destination: Path, allow_rename: bool = True, contr
     return destination, f"cross-volume copy verified ({digest[:12]}), then source relocated"
 
 
+
+def _validate_plan_source(source_path: Path, source_roots: list[Path], expected_size: int) -> Path:
+    """Revalidate a preview item immediately before file operations."""
+    candidate = source_path.expanduser()
+    try:
+        info = candidate.lstat()
+    except OSError as error:
+        raise FileNotFoundError(f"Source file is no longer accessible: {candidate}: {error}") from error
+    reparse_flag = getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
+    attributes = getattr(info, "st_file_attributes", 0)
+    if not stat.S_ISREG(info.st_mode) or stat.S_ISLNK(info.st_mode) or attributes & reparse_flag:
+        raise ValueError(f"Refusing to organize a non-regular file or link: {candidate}")
+    resolved = candidate.resolve()
+    allowed = False
+    for root in source_roots:
+        resolved_root = root.expanduser().resolve()
+        if resolved == resolved_root or resolved_root in resolved.parents:
+            allowed = True
+            break
+    if not allowed:
+        raise ValueError(f"Refusing to organize a file outside the selected source folders: {resolved}")
+    if info.st_size != expected_size:
+        raise ValueError(f"Source file changed after preview; scan it again before organizing: {candidate}")
+    # Reject links/reparse points in the source path's parent chain as well.
+    for parent in candidate.parents:
+        try:
+            parent_info = parent.lstat()
+        except OSError:
+            continue
+        if stat.S_ISLNK(parent_info.st_mode) or getattr(parent_info, "st_file_attributes", 0) & reparse_flag:
+            raise ValueError(f"Refusing to access a source through a link or reparse point: {parent}")
+    return resolved
+
+
 def run_plan(
     plan: ScanPlan,
     mode: str,
@@ -195,19 +230,18 @@ def run_plan(
         try:
             if control is not None:
                 control.checkpoint()
-            if not item.source.exists():
-                raise FileNotFoundError("The source file no longer exists. The preview may be out of date.")
+            source_to_apply = _validate_plan_source(item.source, [Path(root) for root in source_roots], item.size_bytes)
             target = _unique_path(item.destination)
             action["destination"] = str(target)
             action["status"] = "in_progress"
             journal["updated_at"] = _timestamp()
             _write_json_atomic(journal_path, journal)
             if mode == "copy":
-                digest = _copy_verified(item.source, target, control)
+                digest = _copy_verified(source_to_apply, target, control)
                 action["sha256"] = digest
                 action["status"] = "copied"
             else:
-                target, detail = _move_file(item.source, target, allow_rename=False, control=control)
+                target, detail = _move_file(source_to_apply, target, allow_rename=False, control=control)
                 action["detail"] = detail
                 action["status"] = "moved" if not item.source.exists() else "copied_source_kept"
                 if action["status"] == "copied_source_kept":
