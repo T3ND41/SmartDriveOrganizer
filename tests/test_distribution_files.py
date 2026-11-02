@@ -77,6 +77,8 @@ class DistributionFileTests(unittest.TestCase):
         script = (ROOT / "scripts" / "create-and-push-repository.ps1").read_text(encoding="utf-8")
         self.assertIn("$Owner = 'T3ND41'", script)
         self.assertIn("$RepositoryName = 'SmartDriveOrganizer'", script)
+        self.assertIn("$TargetTag = 'v0.8.1'", script)
+        self.assertIn("FEATURE_AUDIT.md", script)
         self.assertIn("$gitAddArgs = @(", script)
         self.assertIn("& git @gitAddArgs", script)
         self.assertNotIn("git -C $ProjectRoot add --all", script)
