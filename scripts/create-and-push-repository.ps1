@@ -2,7 +2,7 @@ $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 
 $Owner = 'T3ND41'
-$RepositoryName = 'SmartDriveOrganizer_RepoReady_v0.3.7'
+$RepositoryName = 'SmartDriveOrganizer'
 $Repository = "$Owner/$RepositoryName"
 $Description = 'Local-first Windows desktop file organizer with multi-drive scanning, custom keyword routing, background monitoring and a verified PowerShell installer.'
 $ProjectRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
