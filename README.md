@@ -51,7 +51,9 @@ The installer fetches the latest GitHub Release, verifies its SHA-256 manifest, 
 
 ## Safe deep search and automatic discovery (v0.5.0)
 
-- Scan every selected drive or folder recursively, including user AppData and documents inside software project folders. Network drives remain visible but require explicit selection.\n- Protected Windows/system/dependency folders, temporary files, links/reparse points and inaccessible entries remain excluded from organization for safety; every known excluded or inaccessible location is recorded in the scan report. A scan with exclusions or access warnings is never reported as fully complete.\n- The application version shown in the desktop sidebar comes from the installed build metadata. Operation journals record the actual running application version.
+- Scan every selected drive or folder recursively, including user AppData and documents inside software project folders. Network drives remain visible but require explicit selection.
+- Protected Windows/system/dependency folders, temporary files, links/reparse points and inaccessible entries remain excluded from organization for safety; every known excluded or inaccessible location is recorded in the scan report. A scan with exclusions or access warnings is never reported as fully complete.
+- The application version shown in the desktop sidebar comes from the installed build metadata. Operation journals record the actual running application version.
 - The search is read-only. It records accessible file names, paths, categories and file metadata. It never moves, copies, renames or deletes anything during discovery.
 - The discovery engine identifies repeated filename words and phrases across **at least two different files**. Discovery currently analyses filename wording; it does not yet build a full-text index of every document. Repeated words inside one file do not count as multiple matches.
 - Existing built-in and saved keywords are not suggested again as new discoveries. Candidate groups are separated by file family and include a match count, sample names and original locations.

@@ -1,3 +1,11 @@
+## 0.8.0 — Exhaustive selected-root scans and scan integrity
+
+- Scan every selected drive or folder recursively, including user AppData and documents inside software project folders; network locations remain explicitly opt-in.
+- Keep protected operating-system, dependency/cache, temporary and link/reparse-point locations out of organization, and record known exclusions and inaccessible folders in scan coverage reporting.
+- Do not present scans with known exclusions or access warnings as fully complete.
+- Keep the application version sourced from package metadata and validate the release tag against the runtime version before producing a release.
+- Expand regression coverage for nested project documents, user AppData traversal, selected-root handling and scan-completeness reporting.
+
 ## 0.7.0 — Branded workspace, live progress and safer duplicate review
 
 - Applied the supplied split red/black face-and-skull mark, matching Windows executable icon and both supplied light/dark feature icon atlases to the application UI.
