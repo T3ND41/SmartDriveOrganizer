@@ -7,9 +7,10 @@ ROOT = Path(__file__).resolve().parents[1]
 class DistributionFileTests(unittest.TestCase):
     def test_bootstrap_targets_public_release_repository(self):
         script = (ROOT / "install.ps1").read_text(encoding="utf-8")
-        self.assertIn("T3ND41/SmartDriveOrganizer_RepoReady_v0.3.7", script)
+        self.assertIn("T3ND41/SmartDriveOrganizer", script)
         self.assertIn("SmartDriveOrganizer-windows-x64.zip", script)
         self.assertIn("SHA256SUMS.txt", script)
+        self.assertIn("$packageVersion -ne $releaseTag", script)
 
     def test_bootstrap_verifies_hash_before_install(self):
         script = (ROOT / "install.ps1").read_text(encoding="utf-8")
@@ -27,7 +28,7 @@ class DistributionFileTests(unittest.TestCase):
         worker = (ROOT / "cloudflare" / "worker.js").read_text(encoding="utf-8")
         self.assertIn('url.pathname !== "/"', worker)
         self.assertIn('"Content-Type": "text/plain; charset=utf-8"', worker)
-        self.assertIn("raw.githubusercontent.com/T3ND41/SmartDriveOrganizer_RepoReady_v0.3.7/main/install.ps1", worker)
+        self.assertIn("raw.githubusercontent.com/T3ND41/SmartDriveOrganizer/main/install.ps1", worker)
 
     def test_release_workflow_builds_windows_binary_and_checksum_manifest(self):
         workflow = (ROOT / ".github" / "workflows" / "release.yml").read_text(encoding="utf-8")
@@ -74,7 +75,7 @@ class DistributionFileTests(unittest.TestCase):
     def test_repository_setup_script_creates_public_repo_and_pushes_tag_safely(self):
         script = (ROOT / "scripts" / "create-and-push-repository.ps1").read_text(encoding="utf-8")
         self.assertIn("$Owner = 'T3ND41'", script)
-        self.assertIn("$RepositoryName = 'SmartDriveOrganizer_RepoReady_v0.3.7'", script)
+        self.assertIn("$RepositoryName = 'SmartDriveOrganizer'", script)
         self.assertIn("$gitAddArgs = @(", script)
         self.assertIn("& git @gitAddArgs", script)
         self.assertNotIn("git -C $ProjectRoot add --all", script)
@@ -85,6 +86,22 @@ class DistributionFileTests(unittest.TestCase):
         self.assertIn("never force-pushes", script.lower())
         self.assertNotIn("git push --force", script.lower())
         self.assertIn("authenticatedUser -ine $Owner", script)
+
+
+    def test_all_current_bootstrap_references_use_the_renamed_repository(self):
+        targets = [
+            "README.md", "install.ps1", "run.ps1", "smart_drive_organizer/update_check.py",
+            "cloudflare/worker.js", "INSTALLER_ENDPOINTS.txt", "START_HERE.txt",
+        ]
+        for relative in targets:
+            content = (ROOT / relative).read_text(encoding="utf-8")
+            self.assertNotIn("SmartDriveOrganizer_RepoReady_v0.3.7", content, relative)
+
+    def test_portable_launcher_checks_package_version_after_checksum(self):
+        script = (ROOT / "run.ps1").read_text(encoding="utf-8")
+        self.assertIn("$packageVersion -ne $tag", script)
+        self.assertLess(script.index("$actualHash -ne $expectedHash"), script.index("$packageVersion -ne $tag"))
+        self.assertLess(script.index("$packageVersion -ne $tag"), script.index("Copy-Item -LiteralPath $stagedExe"))
 
     def test_repository_setup_launcher_targets_guided_powershell_script(self):
         launcher = (ROOT / "PUSH_TO_GITHUB.bat").read_text(encoding="utf-8")
