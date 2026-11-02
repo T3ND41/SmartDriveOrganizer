@@ -90,7 +90,7 @@ See PUBLISHING_TO_GITHUB.md for the full guide.
 
 ONE-LINE INSTALLER DISTRIBUTION (0.3.7)
 - Once the public GitHub repository and its first tagged Windows release exist, PowerShell can install the app without manually downloading the ZIP.
-- Direct command: irm https://raw.githubusercontent.com/T3ND41/SmartDriveOrganizer_RepoReady_v0.3.7/main/install.ps1 | iex
+- Direct command: irm https://raw.githubusercontent.com/T3ND41/SmartDriveOrganizer/main/install.ps1 | iex
 - Preferred short alias after domain configuration: irm https://smart.drive.win | iex
 - The installer downloads the latest Windows release, verifies SHA256SUMS.txt, installs under %LOCALAPPDATA%\Programs\SmartDriveOrganizer, adds a Start Menu shortcut and launches the app.
 - The release workflow builds the Windows EXE only on GitHub's Windows runner. No compiled EXE is included in this source archive.
