@@ -184,16 +184,16 @@ class OrganizerApp(tk.Tk):
         style.configure("Card.TCheckbutton", background=card, foreground=ink, font=("Segoe UI", 9))
         style.map("Card.TCheckbutton", background=[("active", card)])
         style.configure("Card.TRadiobutton", background=card, foreground=ink, font=("Segoe UI", 9))
-        style.map("Card.TRadiobutton", background=[("active", card)])
+        style.map("Card.TRadiobutton", background=[("selected", card), ("active", hover), ("disabled", card)])
         style.configure("TEntry", padding=7, fieldbackground=card, foreground=ink)
         style.configure("TButton", font=("Segoe UI", 9), padding=(10, 7), background=card, foreground=ink)
-        style.map("TButton", background=[("active", hover), ("disabled", disabled)])
+        style.map("TButton", background=[("pressed", red), ("active", hover), ("disabled", disabled)])
         style.configure("Primary.TButton", font=("Segoe UI", 9, "bold"), padding=(16, 10), background=red, foreground=white)
-        style.map("Primary.TButton", background=[("active", "#D71920"), ("disabled", "#8E5558" if self.theme_name in {"dark", "redline"} else "#E7A1A4")], foreground=[("disabled", white)])
+        style.map("Primary.TButton", background=[("pressed", "#A90F16"), ("active", "#D71920"), ("disabled", "#8E5558" if self.theme_name in {"dark", "redline"} else "#E7A1A4")], foreground=[("disabled", white)])
         style.configure("Dark.TButton", font=("Segoe UI", 9, "bold"), padding=(13, 9), background=black, foreground=white)
-        style.map("Dark.TButton", background=[("active", "#333333"), ("disabled", "#777777")])
+        style.map("Dark.TButton", background=[("pressed", red), ("active", "#333333"), ("disabled", "#777777")])
         style.configure("Secondary.TButton", font=("Segoe UI", 9), padding=(10, 7), background=bg, foreground=ink)
-        style.map("Secondary.TButton", background=[("active", hover)])
+        style.map("Secondary.TButton", background=[("pressed", red), ("active", hover)])
         style.configure("Treeview", rowheight=29, font=("Segoe UI", 9), background=card, fieldbackground=card, foreground=ink)
         style.configure("Treeview.Heading", font=("Segoe UI", 9, "bold"), background=black, foreground=white, padding=(8, 8), relief="flat")
         style.map("Treeview.Heading", background=[("active", red)])
@@ -250,11 +250,17 @@ class OrganizerApp(tk.Tk):
             button_bg = red if accent else black
             photo = self.feature_icons.get(NAV_FEATURE_ICONS.get(icon, "workspace"))
             # The supplied icon and its label are one real button, so either can be clicked.
-            tk.Button(sidebar, text=label, image=photo, compound="left", command=command,
+            button = tk.Button(sidebar, text=label, image=photo, compound="left", command=command,
                 anchor="w", padx=14, pady=11, relief="flat", borderwidth=0, cursor="hand2",
-                bg=button_bg, fg=white, activebackground=red if accent else "#101010",
+                bg=button_bg, fg=white, activebackground=red if accent else "#303030",
                 activeforeground=white, font=("Segoe UI", 9, "bold" if accent else "normal"),
-                highlightthickness=0).pack(fill="x", padx=10, pady=2)
+                highlightthickness=0, takefocus=True)
+            button.pack(fill="x", padx=10, pady=2)
+            button.bind("<Enter>", lambda _event, item=button: item.configure(
+                bg=red if accent else "#303030"))
+            button.bind("<Leave>", lambda _event, item=button, base=button_bg: item.configure(bg=base))
+            button.bind("<FocusIn>", lambda _event, item=button: item.configure(highlightthickness=1, highlightbackground=red))
+            button.bind("<FocusOut>", lambda _event, item=button: item.configure(highlightthickness=0))
 
         nav_button("Overview", lambda: self._scroll_to_section("overview"), "grid")
         nav_button("Locations", lambda: self._scroll_to_section("locations"), "drive")
@@ -368,7 +374,8 @@ class OrganizerApp(tk.Tk):
         ttk.Separator(action).pack(fill="x", pady=8)
         ttk.Checkbutton(action, text="Scan every subfolder (required)", variable=self.recursive_var, state="disabled", style="Card.TCheckbutton").pack(anchor="w", pady=4)
         ttk.Checkbutton(action, text="Read document text where possible", variable=self.content_var, style="Card.TCheckbutton").pack(anchor="w", pady=4)
-        ttk.Button(action, text="Add keyword rule…", style="Secondary.TButton", command=self._add_rule).pack(anchor="w", pady=(9, 0))
+        feature_button(action, "keyword-routing", text="Add keyword rule…", style="Secondary.TButton",
+            command=self._add_rule).pack(anchor="w", pady=(9, 0))
 
         selective = ttk.LabelFrame(content, text="04   SELECTIVE TOPIC GROUPS", style="Card.TLabelframe", padding=13)
         selective.pack(fill="x", pady=(0, 12))
@@ -378,7 +385,8 @@ class OrganizerApp(tk.Tk):
         self.topic_options_frame = ttk.Frame(selective, style="Card.TFrame")
         self.topic_options_frame.pack(anchor="w", pady=(8, 0), fill="x")
         self._refresh_topic_options()
-        ttk.Button(selective, text="Add / manage topic groups…", style="Secondary.TButton", command=self._manage_topic_groups).pack(anchor="w", pady=(9, 0))
+        feature_button(selective, "keyword-routing", text="Add / manage topic groups…",
+            style="Secondary.TButton", command=self._manage_topic_groups).pack(anchor="w", pady=(9, 0))
         ttk.Label(selective, text="Create destination folder names and matching keywords. Supported document text can also be searched.",
             style="Muted.TLabel", wraplength=900).pack(anchor="w", pady=(7, 0))
 
