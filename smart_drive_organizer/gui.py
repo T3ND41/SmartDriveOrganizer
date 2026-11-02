@@ -248,13 +248,13 @@ class OrganizerApp(tk.Tk):
 
         def nav_button(label: str, command: Callable[[], None], icon: str, accent: bool = False) -> None:
             button_bg = red if accent else black
-            holder = tk.Frame(sidebar, bg=button_bg)
-            holder.pack(fill="x", padx=10, pady=2)
-            nav_icon(holder, icon, button_bg, accent).pack(side="left", padx=(14, 7), pady=7)
-            tk.Button(holder, text=label, command=command, anchor="w", padx=3, pady=11, relief="flat",
-                borderwidth=0, cursor="hand2", bg=button_bg, fg=white,
-                activebackground=red if accent else "#101010", activeforeground=white,
-                font=("Segoe UI", 9, "bold" if accent else "normal"), highlightthickness=0).pack(side="left", fill="x", expand=True)
+            photo = self.feature_icons.get(NAV_FEATURE_ICONS.get(icon, "workspace"))
+            # The supplied icon and its label are one real button, so either can be clicked.
+            tk.Button(sidebar, text=label, image=photo, compound="left", command=command,
+                anchor="w", padx=14, pady=11, relief="flat", borderwidth=0, cursor="hand2",
+                bg=button_bg, fg=white, activebackground=red if accent else "#101010",
+                activeforeground=white, font=("Segoe UI", 9, "bold" if accent else "normal"),
+                highlightthickness=0).pack(fill="x", padx=10, pady=2)
 
         nav_button("Overview", lambda: self._scroll_to_section("overview"), "grid")
         nav_button("Locations", lambda: self._scroll_to_section("locations"), "drive")
@@ -356,8 +356,15 @@ class OrganizerApp(tk.Tk):
 
         action = ttk.LabelFrame(options, text="03   ORGANIZATION OPTIONS", style="Card.TLabelframe", padding=13)
         action.grid(row=0, column=1, sticky="nsew", padx=(6, 0))
-        ttk.Radiobutton(action, text="Copy files — safest first run", variable=self.mode_var, value="copy", style="Card.TRadiobutton").pack(anchor="w", pady=5)
-        ttk.Radiobutton(action, text="Move files", variable=self.mode_var, value="move", style="Card.TRadiobutton").pack(anchor="w", pady=5)
+        ttk.Radiobutton(action, text="Copy files — safest first run", variable=self.mode_var, value="copy",
+            style="Card.TRadiobutton", image=self.feature_icons.get("copy-mode"), compound="left").pack(anchor="w", pady=5)
+        ttk.Radiobutton(action, text="Move files", variable=self.mode_var, value="move",
+            style="Card.TRadiobutton", image=self.feature_icons.get("move-mode"), compound="left").pack(anchor="w", pady=5)
+        feature_button(action, "safe-naming", text="Safe naming & overwrite protection",
+            style="Secondary.TButton",
+            command=lambda: messagebox.showinfo("Safe naming",
+                "Smart Drive Organizer creates collision-safe destination names, never overwrites an existing destination file, and records completed actions in its operation journal.",
+                parent=self)).pack(anchor="w", pady=(2, 8))
         ttk.Separator(action).pack(fill="x", pady=8)
         ttk.Checkbutton(action, text="Scan every subfolder (required)", variable=self.recursive_var, state="disabled", style="Card.TCheckbutton").pack(anchor="w", pady=4)
         ttk.Checkbutton(action, text="Read document text where possible", variable=self.content_var, style="Card.TCheckbutton").pack(anchor="w", pady=4)
@@ -387,7 +394,7 @@ class OrganizerApp(tk.Tk):
         self.discovery_button.pack(side="left", padx=(8, 0))
         self.teach_button = feature_button(controls, "persistent-rules", text="Teach selected file", style="Secondary.TButton", command=self._teach_selected_file, state="disabled")
         self.teach_button.pack(side="left", padx=(8, 0))
-        self.apply_button = feature_button(controls, "copy-mode", text="APPLY ORGANIZATION", style="Dark.TButton", command=self._apply, state="disabled")
+        self.apply_button = ttk.Button(controls, text="APPLY ORGANIZATION", style="Dark.TButton", command=self._apply, state="disabled")
         self.apply_button.pack(side="left", padx=(8, 0))
         self.undo_button = ttk.Button(controls, text="Undo last move", style="Secondary.TButton", command=self._undo)
         self.undo_button.pack(side="left", padx=(8, 0))
