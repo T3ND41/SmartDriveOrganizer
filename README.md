@@ -4,6 +4,8 @@
 
 A local-first Windows file organizer with a redesigned desktop workspace, custom keyword routing, multi-drive scanning, persistent rules and optional background monitoring.
 
+See [FEATURE_AUDIT.md](FEATURE_AUDIT.md) for the implementation checklist, verification boundaries and capabilities that remain roadmap items.
+
 **Brand system:** red `#D71920`, black `#101010`, and white `#FFFFFF`. The supplied split red/black face-and-skull mark, matching Windows executable icon and supplied light/dark feature icons are bundled with the application. The saved themes are Light, Dark and Redline.
 
 ## v0.8.1 — Security hardening and renamed repository support
