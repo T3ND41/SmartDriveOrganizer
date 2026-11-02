@@ -6,7 +6,7 @@ $RepositoryName = 'SmartDriveOrganizer'
 $Repository = "$Owner/$RepositoryName"
 $Description = 'Local-first Windows desktop file organizer with multi-drive scanning, custom keyword routing, background monitoring and a verified PowerShell installer.'
 $ProjectRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
-$TargetTag = 'v0.3.8'
+$TargetTag = 'v0.8.1'
 
 function Write-Step {
     param([string]$Message, [ConsoleColor]$Color = [ConsoleColor]::Cyan)
@@ -154,7 +154,7 @@ try {
         $message = if ((& git -C $ProjectRoot rev-parse --verify HEAD 2>$null) -and $LASTEXITCODE -eq 0) {
             'Update Smart Drive Organizer project'
         } else {
-            'Initial release: Smart Drive Organizer v0.3.7'
+            'Initial release: Smart Drive Organizer v0.8.1'
         }
         & git -C $ProjectRoot commit -m $message
         if ($LASTEXITCODE -ne 0) { Stop-Safely 'Git commit failed. Review the message above and retry.' }
@@ -211,7 +211,7 @@ try {
 
     Write-Step 'Project published successfully.' -Color Green
     Write-Step "Repository: https://github.com/$Repository" -Color Green
-    Write-Step 'GitHub Actions should now run tests, build the Windows executable and publish the v0.3.7 release.' -Color Green
+    Write-Step 'GitHub Actions should now run tests, build the Windows executable and publish the v0.8.1 release.' -Color Green
     Write-Step 'After the release is published, install with:' -Color Green
     Write-Host "irm https://raw.githubusercontent.com/$Repository/main/install.ps1 | iex" -ForegroundColor White
     Write-Step 'The smart.drive.win alias remains unavailable until its Cloudflare Worker and DNS are configured.' -Color Yellow
