@@ -50,6 +50,7 @@ class DistributionFileTests(unittest.TestCase):
         files = collect_publishable_source_files(ROOT)
         required = {
             "install.ps1",
+            "FEATURE_AUDIT.md",
             "SECURITY.md",
             "REPOSITORY_SETUP.md",
             "INSTALLER_ENDPOINTS.txt",
