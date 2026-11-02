@@ -41,7 +41,7 @@ def _validate_office_archive(path: Path) -> None:
             if info.file_size >= 1024 * 1024:
                 if info.compress_size == 0 or info.file_size / info.compress_size > MAX_ARCHIVE_COMPRESSION_RATIO:
                     raise ValueError("Office archive has a suspicious compression ratio.")
-            member = Path(info.filename.replace("\\\\", "/"))
+            member = Path(info.filename.replace("\\", "/"))
             if member.is_absolute() or ".." in member.parts:
                 raise ValueError("Office archive contains an unsafe member path.")
 
