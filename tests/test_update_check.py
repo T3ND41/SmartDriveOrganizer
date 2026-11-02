@@ -13,7 +13,7 @@ class UpdateCheckTests(unittest.TestCase):
         payload = {
             "tag_name": "v0.8.0",
             "name": "Smart Drive Organizer 0.8.0",
-            "html_url": "https://github.com/T3ND41/SmartDriveOrganizer_RepoReady_v0.3.7/releases/tag/v0.8.0",
+            "html_url": "https://github.com/T3ND41/SmartDriveOrganizer/releases/tag/v0.8.0",
             "published_at": "2026-10-31T08:00:00Z",
         }
         response = urlopen.return_value.__enter__.return_value
@@ -28,7 +28,7 @@ class UpdateCheckTests(unittest.TestCase):
     def test_reports_current_version_as_up_to_date(self, urlopen):
         payload = {
             "tag_name": "v0.7.0",
-            "html_url": "https://github.com/T3ND41/SmartDriveOrganizer_RepoReady_v0.3.7/releases/tag/v0.7.0",
+            "html_url": "https://github.com/T3ND41/SmartDriveOrganizer/releases/tag/v0.7.0",
         }
         urlopen.return_value.__enter__.return_value.read.return_value = json.dumps(payload).encode()
         result = check_latest_release("0.7.0")
@@ -45,7 +45,7 @@ class UpdateCheckTests(unittest.TestCase):
     def test_rejects_invalid_release_tag(self, urlopen):
         payload = {
             "tag_name": "latest",
-            "html_url": "https://github.com/T3ND41/SmartDriveOrganizer_RepoReady_v0.3.7/releases/tag/latest",
+            "html_url": "https://github.com/T3ND41/SmartDriveOrganizer/releases/tag/latest",
         }
         urlopen.return_value.__enter__.return_value.read.return_value = json.dumps(payload).encode()
         with self.assertRaises(ValueError):
