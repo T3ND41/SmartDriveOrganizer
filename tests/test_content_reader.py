@@ -3,6 +3,8 @@ from __future__ import annotations
 import tempfile
 import unittest
 import zipfile
+import sys
+from types import ModuleType, SimpleNamespace
 from unittest.mock import patch
 from pathlib import Path
 
@@ -85,6 +87,35 @@ class ContentReaderTests(unittest.TestCase):
             with patch("smart_drive_organizer.content_reader._legacy_office_text", return_value="legacy Excel text") as reader:
                 self.assertEqual(read_document_text(path), "legacy Excel text")
                 reader.assert_called_once_with(path, "excel")
+
+
+    def test_legacy_powerpoint_reader_disables_macros_before_open(self):
+        document = SimpleNamespace(Slides=SimpleNamespace(Count=0), Close=lambda: None)
+        application = SimpleNamespace(
+            Visible=None,
+            DisplayAlerts=None,
+            AutomationSecurity=None,
+            Presentations=None,
+            Quit=lambda: None,
+        )
+        def open_presentation(*args, **kwargs):
+            self.assertEqual(application.AutomationSecurity, 3)
+            self.assertFalse(application.Visible)
+            self.assertEqual(application.DisplayAlerts, 0)
+            return document
+        application.Presentations = SimpleNamespace(Open=open_presentation)
+        pythoncom = ModuleType("pythoncom")
+        pythoncom.CoInitialize = lambda: None
+        pythoncom.CoUninitialize = lambda: None
+        win32com = ModuleType("win32com")
+        client = ModuleType("win32com.client")
+        client.DispatchEx = lambda _name: application
+        win32com.client = client
+        with patch.object(sys, "platform", "win32"), patch.dict(
+            sys.modules, {"pythoncom": pythoncom, "win32com": win32com, "win32com.client": client}
+        ):
+            from smart_drive_organizer.content_reader import _legacy_office_text
+            self.assertEqual(_legacy_office_text(Path("legacy.ppt"), "powerpoint"), "")
 
     def test_legacy_powerpoint_file_routes_to_optional_windows_reader(self):
         from unittest.mock import patch
